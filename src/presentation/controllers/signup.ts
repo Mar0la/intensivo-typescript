@@ -1,12 +1,15 @@
 import { HttpResponse, HttpRequest, Controller, EmailValidator } from '../protocols/index'
 import { MissingParamError, InvalidParamError } from '../err/index'
 import { badRequest, serverError } from '../helpers/http-helper'
+import { AddAccount } from '../../domain/presentation/add.account'
 
 export class SignUpController implements Controller {
   private readonly emailValidator: EmailValidator
+  private readonly addAccount: AddAccount
 
-  constructor (emailValidator: EmailValidator) {
+  constructor (emailValidator: EmailValidator, addAcount: AddAccount) {
     this.emailValidator = emailValidator
+    this.addAccount = addAcount
   }
 
   handle (httpRequest: HttpRequest): HttpResponse {
@@ -19,7 +22,7 @@ export class SignUpController implements Controller {
       }
 
       // eslint-disable-next-line @typescript-eslint/naming-convention
-      const { email, password, password_confirmation } = httpRequest.body
+      const { name, email, password, password_confirmation } = httpRequest.body
       if (password !== password_confirmation) {
         return badRequest(new InvalidParamError('password_confirmation'))
       }
@@ -28,6 +31,11 @@ export class SignUpController implements Controller {
       if (!isValid) {
         return badRequest(new InvalidParamError('email'))
       }
+      this.addAccount.add({
+        name,
+        email,
+        password
+      })
     } catch (error) {
       return serverError()
     }
